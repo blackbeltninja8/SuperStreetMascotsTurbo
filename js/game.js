@@ -76,12 +76,13 @@ create: function()
 	/*this.input.keyboard.on('keydown_q', function(event){
 		this.player.anims.play('lP');
 	}*/
-
+	hit = 0;
 },
 
 
 update: function (time, delta)
 {
+
 	this.player.body.setVelocity(0);
 	this.player.anims.play('idleAnim', true);
 	if (this.cursors.left.isDown) {
@@ -97,11 +98,18 @@ update: function (time, delta)
 		this.player.body.setVelocityY(80);
 	} //x and y respectively: +60, -90
 	if (this.keys.q.isDown && this.cursors.right.isUp && this.cursors.left.isUp) {
-		this.hitbox.create(((this.player.x) +60), ((this.player.y) -90), 'trans')/*.setScale(.09)*/.setSize(54, 30, 0, 0);
+		this.player.anims.play('lP', 24);
+		if (hit != 1) {
+		this.hitbox.create(((this.player.x) +40), ((this.player.y) -110), 'trans')/*.setScale(.09)*/.setSize(54, 30, 0, 0);
 		//this.hitbox.getFirstAlive().setScale(.09)/*.setOffset(60, -90)*/;
-		this.player.anims.play('lP', 0);
 		//this.hitbox.kill();
 		this.hitbox.clear(true, true);
+		
+		hit = 1;
+	}
+	}
+	if (this.keys.q.isUp) {
+		hit = 0;
 	}
 
 }
