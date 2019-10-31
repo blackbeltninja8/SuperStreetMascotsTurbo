@@ -8,22 +8,91 @@ function BootScene() {
 
 preload: function()
 {
+	var progressBar = this.add.graphics();
+	var progressBox = this.add.graphics();
+	progressBox.fillStyle(0x222222, 0.8);
+	progressBox.fillRect(240, 270, 320, 50);
+	this.load.on('progress', function(value) {
+		console.log(value);
+		progressBar.clear();
+		percentText.setText(parseInt(value * 100) + '%');
+		progressBar.fillStyle(0xffffff, 1);
+		progressBar.fillRect(250, 280, 300 * value, 30);
+	});
+	this.load.on('fileprogress', function(file) {
+		console.log(file.src);
+	});
+	this.load.on('complete', function() {
+		console.log('complete');
+		progressBar.destroy();
+		progressBox.destroy();
+		loadingText.destroy();
+		percentText.destroy();
+	}); //960 / 540 = 480, 220
+	var loadingText = this.make.text({
+		x: 480,
+		y: 220,
+		text: 'Loading...',
+		sytle: {
+			font: '20px monospace',
+			fill: '#ffffff'
+		}
+	});
+	loadingText.setOrigin(0.5, 0.5);
+	var percentText = this.make.text({
+		x: 480,
+		y: 265,
+		text: '0%',
+		style: {
+			font: '18px monospace',
+			fill: '#ffffff'
+		}
+	});
+	percentText.setOrigin(0.5, 0.5);
+
+	
+	
 	this.load.image('background', 'SpriteSheetImages/blackGround.jpg');
 	this.load.image('ground', 'SpriteSheetImages/green.png');
 	
 	this.load.spritesheet('idle', 'SpriteSheets/idle.png', {frameWidth: 210, frameHeight: 375});
-	this.load.spritesheet('basicAttack', 'SpriteSheets/LPLKHPHK.png', {frameWidth: 210 , frameHeight: 375});
-	this.load.spritesheet('crouch','SpriteSheets/crounchAttaks.png', {frameWidth: 210, frameHeight: 190});
+	this.load.spritesheet('basicAttack', 'SpriteSheets/LPLKHPHK2.png', {frameWidth: 210 , frameHeight: 375});
 	this.load.spritesheet('crouchBig','SpriteSheets/crounchAttaksBig.png', {frameWidth: 306, frameHeight: 250});
 	this.load.spritesheet('fallSpecial','SpriteSheets/fallSpecial.png', {frameWidth: 210, frameHeight: 375});
-	this.load.spritesheet('lPunch', 'SpriteSheets/lightPunchRe.png', {frameWidth: 210, frameHeight: 375}); //100 by 31 hitbox, roughly 100 pixels down from top 
+	this.load.spritesheet('HK','SpriteSheets/HK.png', {frameWidth: 210, frameHeight: 375});
 	this.load.spritesheet('trans', 'SpriteSheets/transparent.png', {frameWidth: 210, frameHeight: 375}); //100 by 31 hitbox, roughly 100 pixels down from top 
 },
 
 create: function()
 {
-	this.scene.start('MainScreen');
+	this.scene.start('splashScreen');
 }
+});
+
+var splashScreen = new Phaser.Class({
+	Extends: Phaser.Scene,
+	initialize:
+	function splashScreen()
+	{
+		Phaser.Scene.call(this, {key: 'splashScreen'});
+	},
+	preload: function()
+	{
+		
+	},
+	create: function() {
+		
+	start = this.add.sprite(320, 240, 'background').setInteractive();	
+	start.on('pointerdown', function(event) {
+		this.scene.start('MainScreen');
+	}, this);
+	}/*,
+	update: function(time, delta) {
+		if (this.keys.q.isDown() {
+			this.scene.start('MainScreen');
+		}
+	}*/
+	
 });
 
 var MainScreen = new Phaser.Class({
@@ -51,7 +120,7 @@ create: function()
 	this.physics.world.bounds.height = 540;
 	this.player.setCollideWorldBounds(true);
 	this.cursors = this.input.keyboard.createCursorKeys();
-	this.keys = this.input.keyboard.addKeys('q');
+	this.keys = this.input.keyboard.addKeys('q, e');
 	this.anims.create({
 		key: 'idleAnim',
 		frames: this.anims.generateFrameNumbers('idle', {frames: [1, 2, 3, 4, 3, 2, 8, 7, 5, 6, 5, 7, 8]}),
@@ -60,9 +129,15 @@ create: function()
 	});
 	this.anims.create({
 		key: 'lP',
-		frames: this.anims.generateFrameNumbers('lPunch', {frames: [0]}),
+		frames: this.anims.generateFrameNumbers('basicAttack', {frames: [0]}),
 		frameRate: 6,
 		repeat: false
+	});
+	this.anims.create({
+		key: 'hP',
+		frames: this.anims.generateFrameNumbers('basicAttack', {frames: [1, 2, 3, 4, 3]}),
+		frameRate: 6,
+		repeat: true
 	});
 	this.anims.create({
 		key: 'crounch',
@@ -112,10 +187,13 @@ update: function (time, delta)
 		this.player.body.setSize(120, 190, 0, 0);
 		this.player.body.setOffset(30, 20);
 	}
+	if (this.keys.e.isDown) {
+	this.player.anims.play('hP', true);
+	}
 	if (this.keys.q.isDown && this.cursors.right.isUp && this.cursors.left.isUp) {
-		this.player.anims.play('lP', 24);
+		this.player.anims.play('lP', 6);
 		if (hit != 1) {
-		this.hitbox.create(((this.player.x) +40), ((this.player.y) -110), 'trans')/*.setScale(.09)*/.setSize(54, 30, 0, 0);
+		this.hitbox.create(((this.player.x) +40), ((this.player.y) -110), 'trans')/*.setScale(.09)*/.setSize(70, 30, 0, 0);
 		//this.hitbox.getFirstAlive().setScale(.09)/*.setOffset(60, -90)*/;
 		//this.hitbox.kill();
 		this.hitbox.clear(true, true);
@@ -152,6 +230,7 @@ arcade: {
 },
 scene: [
 BootScene,
+splashScreen,
 MainScreen
 ]
 };
