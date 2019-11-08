@@ -59,7 +59,7 @@ preload: function()
 	this.load.spritesheet('basicAttack', 'SpriteSheets/LPLKHPHK2.png', {frameWidth: 210 , frameHeight: 375});
 	this.load.spritesheet('crouchBig','SpriteSheets/crounchAttaksBig.png', {frameWidth: 306, frameHeight: 250});
 	this.load.spritesheet('fallSpecial','SpriteSheets/fallSpecial.png', {frameWidth: 210, frameHeight: 375});
-	this.load.spritesheet('HK','SpriteSheets/HK.png', {frameWidth: 210, frameHeight: 375});
+	this.load.spritesheet('HK','SpriteSheets/HK.png', {frameWidth: 330, frameHeight: 335});
 	this.load.spritesheet('trans', 'SpriteSheets/transparent.png', {frameWidth: 210, frameHeight: 375}); //100 by 31 hitbox, roughly 100 pixels down from top 
 },
 
@@ -120,10 +120,11 @@ create: function()
 	this.physics.world.bounds.height = 540;
 	this.player.setCollideWorldBounds(true);
 	this.cursors = this.input.keyboard.createCursorKeys();
-	this.keys = this.input.keyboard.addKeys('q, e');
+	this.keys = this.input.keyboard.addKeys('q');
+	heavy = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 	this.anims.create({
 		key: 'idleAnim',
-		frames: this.anims.generateFrameNumbers('idle', {frames: [1, 2, 3, 4, 3, 2, 8, 7, 5, 6, 5, 7, 8]}),
+		frames: this.anims.generateFrameNumbers('idle', {frames: [1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 2, 2, 8, 8, 7, 7, 5, 5, 6, 6, 5, 5, 7, 7, 8, 8]}),
 		frameRate: 6,
 		repeat: true
 	});
@@ -135,9 +136,10 @@ create: function()
 	});
 	this.anims.create({
 		key: 'hP',
-		frames: this.anims.generateFrameNumbers('basicAttack', {frames: [1, 2, 3, 4, 3]}),
-		frameRate: 6,
-		repeat: true
+		frames: this.anims.generateFrameNumbers('HK', {frames: [0, 1, 2, 3, 2, 1, 0]}),
+		duration: 1500,
+		//frameRate: 1000,
+		repeat: false
 	});
 	this.anims.create({
 		key: 'crounch',
@@ -145,6 +147,7 @@ create: function()
 		frameRate: 6,
 		repeat: false
 	});
+
 	/*var forwardDash = this.input.keyboard.createCombo(['39', '39'] {
 		resetOnWrongKey: true, 
 		maxKeyDelay: 1000, 
@@ -160,14 +163,31 @@ create: function()
 	}*/
 	hit = 0;
 	jump = 0;
+	lag = false;
+	console.log(this);
+	this.player.anims.setTimeScale(2);
 },
 
 
 update: function (time, delta)
 {
-
+	this.player.on('animationcomplete', flagChange, this);
+	function flagChange() {
+		lag = false;
+		console.log('I changed');
+	}
+	function heavyKick(player) {
+		lag = true;
+		player.anims.play('hP', false);
+		//player.on('animationcomplete', flagChange, this);
+		console.log('I reached this line');
+	}
 	this.player.body.setVelocity(0);
-	this.player.anims.play('idleAnim', true);
+	if (lag == false) {
+	if (/*(this.keys.e.isUp) &&*/ (this.keys.q.isUp)) {
+	this.player.anims.play('idleAnim', 6);
+}
+	//this.player.anims.play('hP', true);
 	if (this.cursors.left.isDown && this.cursors.down.isUp) {
 		this.player.body.setVelocityX(-80);
 	}
@@ -183,12 +203,22 @@ update: function (time, delta)
 	}
 	if (this.cursors.down.isDown) {
 		this.player.body.setVelocityY(80);
-		this.player.anims.play('crounch', true);
+		this.player.anims.play('crounch', 6);
 		this.player.body.setSize(120, 190, 0, 0);
 		this.player.body.setOffset(30, 20);
 	}
-	if (this.keys.e.isDown) {
-	this.player.anims.play('hP', true);
+	//if (this.keys.e.isDown) {
+		//heavyKick(this.player);
+	//this.player.anims.play('hP', 1);
+	//this.anim.speed = 100;
+	//this.player.animations.currentAnim.speed = 20;
+	//}
+	if (Phaser.Input.Keyboard.JustDown(heavy)) {
+		//console.log('e');
+		//this.player.anims.play('hP', false);
+		this.player.anims.stop();
+		lag = true;
+		heavyKick(this.player);
 	}
 	if (this.keys.q.isDown && this.cursors.right.isUp && this.cursors.left.isUp) {
 		this.player.anims.play('lP', 6);
@@ -205,11 +235,10 @@ update: function (time, delta)
 		hit = 0;
 	}
 		if (this.cursors.down.isUp) {
-		
 		this.player.body.setSize(120, 300, 0, 0);
 		this.player.body.setOffset(30, 20);
 	}
-
+}
 }
 
 
