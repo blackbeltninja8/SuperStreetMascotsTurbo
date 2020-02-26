@@ -51,7 +51,8 @@ preload: function()
 	percentText.setOrigin(0.5, 0.5);
 
 	
-	
+	this.load.audio('bg', ['Sounds/mega.mp3']);
+	this.load.audio('op', ['Sounds/op.m4a']);
 	this.load.image('background', 'SpriteSheetImages/blackGround.jpg');
 	this.load.image('ground', 'SpriteSheetImages/green.png');
 	
@@ -62,6 +63,7 @@ preload: function()
 	this.load.spritesheet('crouchBig','SpriteSheets/crounchAttaksBig.png', {frameWidth: 306, frameHeight: 250});
 	this.load.spritesheet('crouchBigFlip','SpriteSheets/crounchAttaksBigflip.png', {frameWidth: 186, frameHeight: 250});
 	this.load.spritesheet('hurting', 'SpriteSheets/hurt.png', {frameWidth: 201, frameHeight: 345});
+	this.load.spritesheet('hurtingFlip', 'SpriteSheets/hurtFlip.png', {frameWidth: 201, frameHeight: 345});
 	this.load.spritesheet('HK','SpriteSheets/HK.png', {frameWidth: 330, frameHeight: 335});
 	this.load.spritesheet('HKflip', 'SpriteSheets/HKflip.png', {frameWidth: 330, frameHeight: 335});
 	this.load.spritesheet('trans', 'SpriteSheets/transparent.png', {frameWidth: 210, frameHeight: 375}); //100 by 31 hitbox, roughly 100 pixels down from top 
@@ -85,7 +87,8 @@ var splashScreen = new Phaser.Class({
 		
 	},
 	create: function() {
-		
+	op = this.sound.add('op');
+	op.play();
 	start = this.add.sprite(320, 240, 'background').setInteractive();	
 	start.on('pointerdown', function(event) {
 		this.scene.start('MainScreen');
@@ -136,6 +139,9 @@ preload: function()
 
 create: function()
 {	
+	bg = this.sound.add('bg');
+	op.stop();
+	bg.play();
 	hit = 0;
 	hit2 = 0;
 	jump = 0;
@@ -145,7 +151,7 @@ create: function()
 	player2Health = 100;
 	lag = false;
 	lag2 = false;
-	time = 99;
+	timeVar = 99;
 	this.add.image(320, 240, 'background');
 	this.player = this.physics.add.sprite(320, 390, 'idleAnim', 2);
 	//this.player.body.setSize(120, 300, 0, 0);
@@ -216,7 +222,7 @@ create: function()
 	});
 	this.anims.create({
 		key: 'lP',
-		frames: this.anims.generateFrameNumbers('basicAttack', {frames: [0]}),
+		frames: this.anims.generateFrameNumbers('basicAttack', {frames: [0, 0, 0]}),
 		frameRate: 6,
 		duration: 500,
 		repeat: false
@@ -243,7 +249,7 @@ create: function()
 	});
 	this.anims.create({
 		key: 'lPflip',
-		frames: this.anims.generateFrameNumbers('basicAttackFlip', {frames: [0]}),
+		frames: this.anims.generateFrameNumbers('basicAttackFlip', {frames: [0, 0, 0]}),
 		frameRate: 6,
 		duration: 500,
 		repeat: false
@@ -295,31 +301,55 @@ create: function()
 	this.anims.create({
 		key: 'hurtLK',
 		frames: this.anims.generateFrameNumbers('hurting', {frames: [0, 1, 2]}),
-		duration: 500,
+		duration: 700,
 		repeat: false
 	});
 		this.anims.create({
 		key: 'hurtLP',
-		frames: this.anims.generateFrameNumbers('hurting', {frames: [0, 1, 2]}),
-		duration: 300,
+		frames: this.anims.generateFrameNumbers('hurtingFlip', {frames: [0, 1, 2]}),
+		duration: 600,
 		repeat: false
 	});
-	/*var forwardDash = this.input.keyboard.createCombo(['39', '39'] {
-		resetOnWrongKey: true, 
-		maxKeyDelay: 1000, 
-		resetOnMatch: true, 
-		deleteOnMatch: false});*/
+	this.anims.create({
+		key: 'hurtHKFlip',
+		frames: this.anims.generateFrameNumbers('hurtingFlip', {frames: [0, 1, 2]}),
+		duration: 1000,
+		repeat: false
+	});
+	this.anims.create({
+		key: 'hurtHPFlip',
+		frames: this.anims.generateFrameNumbers('hurtingFlip', {frames: [0, 1, 2]}),
+		duration: 800,
+		repeat: false
+	});
+	this.anims.create({
+		key: 'hurtLKFlip',
+		frames: this.anims.generateFrameNumbers('hurtingFlip', {frames: [0, 1, 2]}),
+		duration: 700,
+		repeat: false
+	});
+		this.anims.create({
+		key: 'hurtLPFlip',
+		frames: this.anims.generateFrameNumbers('hurtingFlip', {frames: [0, 1, 2]}),
+		duration: 600,
+		repeat: false
+	});
 	this.ground = this.physics.add.staticGroup();
 	this.ground.create(480, 805, 'ground');
 	this.hitbox = this.physics.add.group();
 	this.hitbox.maxSize = 1;
+	this.block1 = this.physics.add.group();
+	this.block1.maxSize = 1;
+	this.block2 = this.physics.add.group();
+	this.block2.maxSize = 1;
+	this.physics.add.collider(this.hitbox, this.block1);
+	this.physics.add.collider(this.hitbox, this.block2);
 	this.physics.add.collider(this.player, this.ground);
 	this.physics.add.collider(this.player2, this.ground);
 	this.physics.add.collider(this.player, this.player2);
 	this.physics.add.collider(this.hitbox, this.player2);
-	/*this.input.keyboard.on('keydown_q', function(event){
-		this.player.anims.play('lP');
-	}*/
+	this.physics.add.collider(this.hitbox, this.hitbox);
+
 	this.player.anims.setTimeScale(2);
 	this.player2.anims.setTimeScale(2);
 	this.grandTimer = this.time.addEvent({
@@ -328,11 +358,11 @@ create: function()
 		loop: true
 	});
 	function tick() {
-		if (time == 0) {
-		console.log('game over');
-	}
-			time = time - 1;
-			timeText.setText(time);
+	/*if (time == 99000) {
+		grandTimer.paused = true;
+	}*/
+			timeVar = timeVar - 1;
+			timeText.setText(timeVar);
 		
 	}
 },
@@ -340,7 +370,8 @@ create: function()
 
 update: function (time, delta)
 {
-	if ((time <= 0) || (player1Health <= 0) || (player2Health <= 0)) {
+	console.log(timeVar);
+	if (/*(time >= 103000)*/(timeVar == 0) || (player1Health <= 0) || (player2Health <= 0)) {
 		//this.physics.pause();
 		if ((player1Health == 0) || (player2Health > player1Health)) {
 		this.make.text({
@@ -357,7 +388,7 @@ update: function (time, delta)
 	});
 	}
 	else {
-			var begin = this.make.text({
+		var begin = this.make.text({
 		x: 400,
 		y: 240,
 		text: 'Tie Game',
@@ -376,8 +407,11 @@ update: function (time, delta)
 	this.player2.body.setOffset(30, 20);
 	}
 	if (lag == false) {
+		this.player.body.setSize(120, 300, 0, 0);
+		this.player.body.setOffset(30, 20);
+	}
+	if (lag == false) {
 	this.player.anims.play('idleAnim', 6);
-	//this.player.anims.play('hP', true);
 	if (this.cursors.left.isDown && this.cursors.down.isUp) {
 		this.player.body.setVelocityX(-80);
 	}
@@ -392,64 +426,63 @@ update: function (time, delta)
 	if (this.player.body.touching.down) {
 		jump = 0;
 	}
-	if (this.cursors.down.isDown) {
+	if (this.cursors.down.isDown && this.cursors.right.isUp && this.cursors.left.isUp) {
 		this.player.body.setVelocityY(80);
 		this.player.anims.play('crounch', 6);
 		this.player.body.setSize(120, 190, 0, 0);
 		this.player.body.setOffset(30, 20);
+		this.block1 = this.physics.add.sprite((this.player.x - 33), ((this.player.y - 80)), 'trans', 0).setSize(30, 150, 0, 0);
+		//this.block1.destroy();
 	}
-	//if (this.keys.e.isDown) {
-		//heavyKick(this.player);
-	//this.player.anims.play('hP', 1);
-	//this.anim.speed = 100;
-	//this.player.animations.currentAnim.speed = 20;
-	//}
+	else if (this.cursors.right.isDown && this.cursors.down.isDown) {
+		this.player.body.setVelocityX(50);
+	}
+	else if (this.cursors.left.isDown && this.cursors.down.isDown) {
+		this.player.body.setVelocityX(-50);
+		this.block1 = this.physics.add.sprite((this.player.x + 23), ((this.player.y - 140)), 'trans', 0).setSize(30, 200, 0, 0);
+	}
 	if (Phaser.Input.Keyboard.JustDown(heavy)) {
-		//console.log('e');
-		//this.player.anims.play('hP', false);
 		this.player.anims.stop();
 		lag = true;
-		//this.player.setX((this.player.x+60))
 		heavyKick(this.player);
-		hitBoxTime = this.time.delayedCall(400, HKhit, [], this);
-		//hitBoxTime = this.time.delayedCall(600, jumpbackHk2, [], this);
-		
+		hitBoxTime = this.time.delayedCall(400, HKhit, [], this);		
 	}
 	if (Phaser.Input.Keyboard.JustDown(heavyP)) {
 		this.player.anims.stop();
 		lag = true;
-		//this.player.setX((this.player.x+60))
 		heavyPunch(this.player);
 		hitBoxTime = this.time.delayedCall(250, HPhit, [], this);
-		//hitBoxTime = this.time.delayedCall(610, jumpbackHp2, [], this);
 	}
 	if (Phaser.Input.Keyboard.JustDown(lightK)) {
-		//attackLK.resume;
 		this.player.anims.stop();
 		lag = true;
-		//this.player.setX((this.player.x+60))
 		lightKick(this.player);
 		hitBoxTime = this.time.delayedCall(200, LKhit, [], this);
-		//hitBoxTime = this.time.delayedCall(500, jumpbackLk2, [], this);
 	}
 	if (Phaser.Input.Keyboard.JustDown(lightP)) {
 		this.player.anims.stop();
 		lag = true;
-		//this.player.setX((this.player.x+60))
 		lightPunch(this.player);
 		hitBoxTime = this.time.delayedCall(0, LPhit, [], this);
-		//hitBoxTime = this.time.delayedCall(5, jumpbackLp2, [], this);
 	}
-		if (this.cursors.down.isUp) {
+		/*if (this.cursors.down.isUp) {
 		this.player.body.setSize(120, 300, 0, 0);
 		this.player.body.setOffset(30, 20);
-	}
+	}*/
 }
+doubleTapTwo = Phaser.Input.Keyboard.DownDuration((this.leftKey.a),1000);
 	//player 2 stuff
 	if (lag2 == false) {
 		this.player2.anims.play('idleAnimFlip', 6);
 	if (this.leftKey.a.isDown && this.downKey.s.isUp) {
+/*		if (Phaser.Input.Keyboard.UpDuration((this.leftKey.a),1000)) {
+			console.log('a key double tapped'); 
+		}*//* if (doubleTapTwo) { 
+		this.player2.body.setVelocityX(-160);
+		}*/
+		
 		this.player2.body.setVelocityX(-80);
+	
 	}
 	else if (this.rightKey.d.isDown && this.downKey.s.isUp) {
 		this.player2.body.setVelocityX(80);
@@ -462,23 +495,27 @@ update: function (time, delta)
 	if (this.player2.body.touching.down) {
 		jump2 = 0;
 	}
-	if (this.downKey.s.isDown) {
+	if (this.downKey.s.isDown && this.leftKey.a.isUp && this.rightKey.d.isUp) {
 		this.player2.body.setVelocityY(80);
 		this.player2.anims.play('crounchFlip', false);
 		this.player2.body.setSize(120, 190, 0, 0);
-		//this.player2.body.setOffset(150, 20);
+		this.block2 = this.physics.add.sprite((this.player2.x - 65), ((this.player2.y - 80)), 'trans', 0).setSize(30, 150, 0, 0);
+		//this.block2.destroy();
+	}
+	else if (this.leftKey.a.isDown && this.downKey.s.isDown) {
+		this.player2.body.setVelocityX(-50);
+	}
+	else if (this.rightKey.d.isDown && this.downKey.s.isDown) {
+		this.player2.body.setVelocityX(50);
+		this.block2 = this.physics.add.sprite((this.player2.x - 83), ((this.player2.y - 140)), 'trans', 0).setSize(30, 200, 0, 0);
+
 	}
 	if (Phaser.Input.Keyboard.JustDown(heavy2)) {
-		//console.log('e');
-		//this.player.anims.play('hP', false);
 		this.player2.anims.stop();
-		//this.player2.body.setOffset(150, 20);
-		//lag2 = true;
-		//heavyKick2(this.player2);
 		lag2 = true;
 		this.player2.setX((this.player2.x-60))
 		this.player2.anims.play('hKflip', false);
-		this.player2.body.setSize(120, 300, 0, 0);
+		//this.player2.body.setSize(120, 300, 0, 0);
 		this.player2.body.setOffset(200, 0);
 		hitBoxTime = this.time.delayedCall(400, HKhit2, [], this);
 		hitBoxTime = this.time.delayedCall(600, jumpbackHk, [], this);
@@ -490,19 +527,15 @@ update: function (time, delta)
 		this.player2.setX((this.player2.x-60))
 		this.player2.anims.play('hPflip', false);
 		this.player2.body.setOffset(135, 0);
-		//this.player2.body.setVelocityX(-160);
-		//heavyPunch2(this.player2);
 		hitBoxTime = this.time.delayedCall(250, HPhit2, [], this);
 		hitBoxTime = this.time.delayedCall(610, jumpbackHp, [], this);
 	}
 	if (Phaser.Input.Keyboard.JustDown(lightK2)) {
-		//attackLK.resume;
 		this.player2.anims.stop();
 		lag2 = true;
 		this.player2.setX((this.player2.x-60))
 		this.player2.anims.play('lKflip', false);
 		this.player2.body.setOffset(135, 40);
-		//lightKick2(this.player2);
 		hitBoxTime = this.time.delayedCall(200, LKhit2, [], this);
 		hitBoxTime = this.time.delayedCall(500, jumpbackLk, [], this);
 	}
@@ -511,17 +544,11 @@ update: function (time, delta)
 		lag2 = true;
 		this.player2.setX((this.player2.x-60))
 		this.player2.anims.play('lPflip', false);
-		//this.player2.body.setSize(120, 300, 0, 0);
 		this.player2.body.setOffset(130, 0);
-		//lightPunch2(this.player2);
 		hitBoxTime = this.time.delayedCall(0, LPhit2, [], this);
 		hitBoxTime = this.time.delayedCall(5, jumpbackLp, [], this);
 
 	}
-	/*if (this.downKey.s.isUp) {
-		this.player2.body.setSize(120, 300, 0, 0);
-		this.player2.body.setOffset(30, 20);
-	}*/
 }
 }
 
@@ -529,6 +556,7 @@ update: function (time, delta)
 });
 	function restart() {
 		this.scene.start('splashScreen');
+		time = 0;
 	}
 	function jumpbackLk() {
 		this.player2.setX((this.player2.x+60));
@@ -558,9 +586,16 @@ update: function (time, delta)
 		if (hit != 1) {
 		this.hkHit = this.physics.add.sprite(((this.player.x) +20), ((this.player.y) - 30), 'trans', 0).setSize(110, 50, 0, 0);;
 		this.physics.add.overlap(this.player2, this.hkHit, this.notification, null, this);
-		if (this.physics.overlap(this.player2, this.hkHit)) {
+		this.physics.add.overlap(this.block2, this.hkHit, this.notification, null, this);
+		if (this.physics.overlap(this.block2, this.hkHit)) {
+			this.player.setX((this.player.x - 5));
+			this.player2.setX((this.player2.x+30));
+		}
+		else if (this.physics.overlap(this.player2, this.hkHit)) {
 			this.player.setX((this.player.x - 5));
 			damageLK(this.player2);
+			this.player2.setX((this.player2.x+30));
+
 		}
 		this.hkHit.destroy();
 		hit = 1;
@@ -568,28 +603,19 @@ update: function (time, delta)
 	}
 	function HKhit() {
 		if (hit != 1) {
-		//this.hitbox.create(((this.player.x) +20), ((this.player.y) - 70), 'trans')/*.setScale(.09)*/.setSize(150, 50, 0, 0);
-		//this.hitbox.getFirstAlive().setScale(.09)/*.setOffset(60, -90)*/;
-		//this.hitbox.kill();
-		//	damage(this.player2);
 		this.hkHit = this.physics.add.sprite((this.player.x + 20), ((this.player.y) - 70), 'trans', 0).setSize(150, 50, 0, 0);
-		/*if(this.physics.overlap(this.player2, this.hitbox)) {
-			console.log('we have collided');
-		}*/
-		/*if (this.hkHit.body.touching.none) {
-			console.log('whiffed');
-		} else {
-			damage(this.player2);
-		}*/
-		//this.hkHit.refresh();
 		this.physics.add.overlap(this.player2, this.hkHit, this.notification, null, this);
-		console.log(this.physics.overlap(this.player2, this.hkHit));
-		if (this.physics.overlap(this.player2, this.hkHit)) {
+		this.physics.add.overlap(this.block2, this.hkHit, this.notification, null, this);
+		if (this.physics.overlap(this.block2, this.hkHit)) {
+			this.player.setX((this.player.x - 10));
+			this.player2.setX((this.player2.x+50));
+		}
+		else if (this.physics.overlap(this.player2, this.hkHit)) {
 				this.player.setX((this.player.x - 10));
-				damageHK(this.player2);
+				damageHK(this.player2);			
+				this.player2.setX((this.player2.x+50));
 		}
 		this.hkHit.destroy();
-		//this.hitbox.clear(true, true);
 		hit = 1;
 		}
 	}
@@ -597,8 +623,13 @@ update: function (time, delta)
 		if (hit != 1) {
 		this.hkHit = this.physics.add.sprite((this.player.x + 20), ((this.player.y) - 110), 'trans', 0).setSize(70, 30, 0, 0);
 		this.physics.add.overlap(this.player2, this.hkHit, this.notification, null, this);
-		if (this.physics.overlap(this.player2, this.hkHit)) {
+		this.physics.add.overlap(this.block2, this.hkHit, this.notification, null, this);
+		if (this.physics.overlap(this.block2, this.hkHit)) {
+			this.player2.setX((this.player2.x+23));
+		}
+		else if(this.physics.overlap(this.player2, this.hkHit)) {
 				damageHP(this.player2);
+				this.player2.setX((this.player2.x+23));
 		}
 		this.hkHit.destroy();
 		hit = 1;
@@ -608,9 +639,15 @@ update: function (time, delta)
 		if (hit != 1) {
 		this.hkHit = this.physics.add.sprite((this.player.x + 20), ((this.player.y) - 110), 'trans', 0).setSize(70, 30, 0, 0);
 		this.physics.add.overlap(this.player2, this.hkHit, this.notification, null, this);
-		if (this.physics.overlap(this.player2, this.hkHit)) {
+		this.physics.add.overlap(this.block2, this.hkHit, this.notification, null, this);
+		if (this.physics.overlap(this.block2, this.hkHit)) {
+			this.player.setX((this.player.x - 5));
+			this.player2.setX((this.player2.x+18));
+		}
+		else if (this.physics.overlap(this.player2, this.hkHit)) {
 			this.player.setX((this.player.x - 5));
 				damageLP(this.player2);
+				this.player2.setX((this.player2.x+18));
 		}
 		this.hkHit.destroy();
 		hit = 1;
@@ -620,10 +657,17 @@ update: function (time, delta)
 		if (hit2 != 1) {
 		this.hkHit2 = this.physics.add.sprite(((this.player2.x) -110), ((this.player2.y) - 30), 'trans', 0).setSize(110, 50, 0, 0);;
 		this.physics.add.overlap(this.player, this.hkHit2, this.notification, null, this);
-		if (this.physics.overlap(this.player, this.hkHit2)) {
+		this.physics.add.overlap(this.block1, this.hkHit2, this.notification, null, this);
+		if (this.physics.overlap(this.block1, this.hkHit2)) {
+			this.player2.setX((this.player2.x + 5));
+			this.player.setX((this.player.x-30));
+		}
+		else if(this.physics.overlap(this.player, this.hkHit2)) {
 			lag = true;
 			this.player2.setX((this.player2.x + 5));
 			damageLK2(this.player);
+			this.player.setX((this.player.x-30));
+
 		}
 		this.hkHit2.destroy();
 		hit2 = 1;
@@ -631,29 +675,22 @@ update: function (time, delta)
 	}
 	function HKhit2() {
 		if (hit2 != 1) {
-		//this.hitbox.create(((this.player.x) +20), ((this.player.y) - 70), 'trans')/*.setScale(.09)*/.setSize(150, 50, 0, 0);
-		//this.hitbox.getFirstAlive().setScale(.09)/*.setOffset(60, -90)*/;
-		//this.hitbox.kill();
-		//	damage(this.player2);
 		this.hkHit2 = this.physics.add.sprite((this.player2.x - 150), ((this.player2.y) - 70), 'trans', 0).setSize(150, 50, 0, 0);
-		/*if(this.physics.overlap(this.player2, this.hitbox)) {
-			console.log('we have collided');
-		}*/
-		/*if (this.hkHit.body.touching.none) {
-			console.log('whiffed');
-		} else {
-			damage(this.player2);
-		}*/
-		//this.hkHit.refresh();
+
 		this.physics.add.overlap(this.player, this.hkHit2, this.notification, null, this);
 		console.log(this.physics.overlap(this.player, this.hkHit2));
-		if (this.physics.overlap(this.player, this.hkHit2)) {
+		this.physics.add.overlap(this.block1, this.hkHit2, this.notification, null, this);
+		if (this.physics.overlap(this.block1, this.hkHit2)) {
+			this.player2.setX((this.player2.x + 5));
+			this.player.setX((this.player.x-30));
+		}
+		else if (this.physics.overlap(this.player, this.hkHit2)) {
 			lag = true;
 			this.player2.setX((this.player2.x + 10));
 			damageHK2(this.player);
+			this.player.setX((this.player.x-50));
 		}
 		this.hkHit2.destroy();
-		//this.hitbox.clear(true, true);
 		hit2 = 1;
 		}
 	}
@@ -661,8 +698,14 @@ update: function (time, delta)
 		if (hit2 != 1) {
 		this.hkHit2 = this.physics.add.sprite((this.player2.x - 60), ((this.player2.y) - 110), 'trans', 0).setSize(70, 30, 0, 0);
 		this.physics.add.overlap(this.player, this.hkHit2, this.notification, null, this);
-		if (this.physics.overlap(this.player, this.hkHit2)) {
+		this.physics.add.overlap(this.block1, this.hkHit2, this.notification, null, this);
+		if (this.physics.overlap(this.block1, this.hkHit2)) {
+			this.player2.setX((this.player2.x + 5));
+			this.player.setX((this.player.x-30));
+		}
+		else if (this.physics.overlap(this.player, this.hkHit2)) {
 				damageHP2(this.player);
+				this.player.setX((this.player.x-23));
 				lag = true;
 		}
 		this.hkHit2.destroy();
@@ -673,10 +716,16 @@ update: function (time, delta)
 		if (hit2 != 1) {
 		this.hkHit2 = this.physics.add.sprite((this.player2.x - 60), ((this.player2.y) - 110), 'trans', 0).setSize(70, 30, 0, 0);
 		this.physics.add.overlap(this.player, this.hkHit2, this.notification, null, this);
-		if (this.physics.overlap(this.player, this.hkHit2)) {
+		this.physics.add.overlap(this.block1, this.hkHit2, this.notification, null, this);
+		if (this.physics.overlap(this.block1, this.hkHit2)) {
+			this.player2.setX((this.player2.x + 5));
+			this.player.setX((this.player.x-30));
+		}
+		else if (this.physics.overlap(this.player, this.hkHit2)) {
 			lag = true;
 			this.player2.setX((this.player2.x + 5));
 			damageLP2(this.player);
+			this.player.setX((this.player.x-20));
 		}
 		this.hkHit2.destroy();
 		hit2 = 1;
@@ -727,7 +776,7 @@ update: function (time, delta)
 		player2.anims.stop();
 		lag2 = true;
 		console.log('so this is triggered');
-		player2.anims.play('hurtHK', false);
+		player2.anims.play('hurtHKFlip', false);
 		player2Health = player2Health - 6;
 		health2.clear();
 		if (player2Health >= 66) {
@@ -745,7 +794,7 @@ update: function (time, delta)
 		player2.anims.stop();
 		lag2 = true;
 		console.log('so this is triggered');
-		player2.anims.play('hurtLP', false);
+		player2.anims.play('hurtLPFlip', false);
 		player2Health = player2Health - 2;
 		health2.clear();
 		if (player2Health >= 66) {
@@ -763,7 +812,7 @@ update: function (time, delta)
 		player2.anims.stop();
 		lag2 = true;
 		console.log('so this is triggered');
-		player2.anims.play('hurtHP', false);
+		player2.anims.play('hurtHPFlip', false);
 		player2Health = player2Health - 10;
 		health2.clear();
 		if (player2Health >= 66) {
@@ -781,7 +830,7 @@ update: function (time, delta)
 		player2.anims.stop();
 		lag2 = true;
 		console.log('so this is triggered');
-		player2.anims.play('hurtLK', false);
+		player2.anims.play('hurtLKFlip', false);
 		player2Health = player2Health - 4;
 		health2.clear();
 		if (player2Health >= 66) {
@@ -879,4 +928,3 @@ MainScreen
 ]
 };
 var game = new Phaser.Game(config);
-
